@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Car parts store</title>
+</head>
+<body>
+<h1>Search car parts</h1>
+<div>
+    <form action="#" th:action="@{/mvc/carParts}" th:object="${carPartsSearchForm}" method="post">
+        <p>Name: <input type="text" th:field="*{name}" /></p>
+        <p>
+            Category:
+            <select th:field="*{category}">
+                <option value="">select car part category</option>
+                <option th:each="carPartCategory : ${carPartCategoryList}" th:value="${carPartCategory}" th:text="${carPartCategory}"></option>
+            </select>
+        </p>
+        <p>
+            Lower price: <input type="number" th:field="*{lowerPrice}" />
+            Upper price: <input type="number" th:field="*{upperPrice}" />
+        </p>
+        <p>Description: <input type="text" th:field="*{description}" /></p>
+        <p><input type="submit" value="Search" /> <input type="reset" value="Reset" /></p>
+    </form>
+</div>
+<table>
+    <thead>
+    <tr>
+        <th> Name </th>
+        <th> Category </th>
+        <th> Price </th>
+        <th> Description </th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:if="${carParts.empty}">
+        <td colspan="2"> No Car parts available </td>
+    </tr>
+    <tr th:each="carPart : ${carParts}">
+        <td><span th:text="${carPart.name}"> Name </span></td>
+        <td><span th:text="${carPart.categoryString}"> Category </span></td>
+        <td><span th:text="${carPart.price}"> Price </span></td>
+        <td><span th:text="${carPart.description}"> Description </span></td>
+    </tr>
+    </tbody>
+</table>
+</body>
+</html>
