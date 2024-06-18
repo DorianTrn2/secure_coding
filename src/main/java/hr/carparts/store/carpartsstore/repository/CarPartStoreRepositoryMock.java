@@ -1,10 +1,15 @@
 package hr.carparts.store.carpartsstore.repository;
 
+import hr.carparts.store.carpartsstore.exception.IllegalClassException;
 import hr.carparts.store.carpartsstore.model.CarPart;
 import hr.carparts.store.carpartsstore.model.CarPartCategoryEnum;
 import hr.carparts.store.carpartsstore.model.CarPartsSearchForm;
+import hr.carparts.store.carpartsstore.whitelist.WhitelistValidator;
 import org.springframework.stereotype.Repository;
 
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
@@ -12,6 +17,7 @@ import java.util.Optional;
 
 @Repository
 public class CarPartStoreRepositoryMock implements CarPartStoreRepository {
+    private static final String FILE = "dat/carpart.dat";
 
     private static List<CarPart> carPartList;
 
@@ -50,6 +56,18 @@ public class CarPartStoreRepositoryMock implements CarPartStoreRepository {
         carPartList.add(secondCarPart);
         carPartList.add(thirdCarPart);
         carPartList.add(fourthCarPart);
+
+        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(FILE))) {
+            oos.writeObject(carPartList);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        try {
+            WhitelistValidator.validateSerializedFile(FILE);
+        } catch (IOException | IllegalClassException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override

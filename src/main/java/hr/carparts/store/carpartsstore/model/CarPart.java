@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 
 @Data
@@ -14,7 +15,7 @@ import java.math.BigDecimal;
 @Entity
 @Table(name = "CAR_PART")
 @EqualsAndHashCode
-public class CarPart {
+public class CarPart implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

@@ -7,6 +7,8 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.stereotype.Repository;
 
@@ -23,9 +25,12 @@ import java.util.Optional;
 public class CarPartStoreRepositoryJdbc implements CarPartStoreRepository {
     private final JdbcTemplate jdbcTemplate;
     private final SimpleJdbcInsert simpleJdbcInsert;
+    private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
+
 
     public CarPartStoreRepositoryJdbc(JdbcTemplate jdbcTemplate, DataSource dataSource) {
         this.jdbcTemplate = jdbcTemplate;
+        this.namedParameterJdbcTemplate = new NamedParameterJdbcTemplate(dataSource);
         this.simpleJdbcInsert = new SimpleJdbcInsert(dataSource);
         simpleJdbcInsert.withTableName("CAR_PART")
                 .usingGeneratedKeyColumns("ID");
@@ -63,41 +68,34 @@ public class CarPartStoreRepositoryJdbc implements CarPartStoreRepository {
     @Override
     public List<CarPart> filterByCriteria(CarPartsSearchForm carPartsSearchForm) {
         StringBuilder sqlQuery = new StringBuilder("SELECT * FROM CAR_PART WHERE 1 = 1 ");
-        List<String> queryArgs = new ArrayList<>();
+        MapSqlParameterSource params = new MapSqlParameterSource();
 
-        if(!carPartsSearchForm.getName().isEmpty()) {
-            sqlQuery.append("AND NAME LIKE ('%'||?||'%') ");
-            queryArgs.add(carPartsSearchForm.getName());
+        if (carPartsSearchForm.getName() != null && !carPartsSearchForm.getName().isEmpty()) {
+            sqlQuery.append("AND NAME LIKE :name ");
+            params.addValue("name", "%" + carPartsSearchForm.getName() + "%");
         }
 
-        if(!carPartsSearchForm.getCategory().isEmpty()) {
-            sqlQuery.append("AND CATEGORY_ID = ? ");
-            queryArgs.add(String.valueOf(CarPartCategoryEnum.valueOf(
-                    carPartsSearchForm.getCategory()).ordinal() + 1));
+        if (carPartsSearchForm.getCategory() != null && !carPartsSearchForm.getCategory().isEmpty()) {
+            sqlQuery.append("AND CATEGORY_ID = :categoryId ");
+            params.addValue("categoryId", CarPartCategoryEnum.valueOf(carPartsSearchForm.getCategory()).ordinal() + 1);
         }
 
-        if(Optional.ofNullable(carPartsSearchForm.getLowerPrice()).isPresent()) {
-            sqlQuery.append("AND PRICE >= ? ");
-            queryArgs.add(carPartsSearchForm.getLowerPrice().toString());
+        if (carPartsSearchForm.getLowerPrice() != null) {
+            sqlQuery.append("AND PRICE >= :lowerPrice ");
+            params.addValue("lowerPrice", carPartsSearchForm.getLowerPrice());
         }
 
-        if(Optional.ofNullable(carPartsSearchForm.getUpperPrice()).isPresent()) {
-            sqlQuery.append("AND PRICE <= ? ");
-            queryArgs.add(carPartsSearchForm.getUpperPrice().toString());
+        if (carPartsSearchForm.getUpperPrice() != null) {
+            sqlQuery.append("AND PRICE <= :upperPrice ");
+            params.addValue("upperPrice", carPartsSearchForm.getUpperPrice());
         }
 
-        if(!carPartsSearchForm.getDescription().isEmpty()) {
-            sqlQuery.append("AND DESCRIPTION LIKE ('%'||?||'%') ");
-            queryArgs.add(carPartsSearchForm.getDescription());
+        if (carPartsSearchForm.getDescription() != null && !carPartsSearchForm.getDescription().isEmpty()) {
+            sqlQuery.append("AND DESCRIPTION LIKE :description ");
+            params.addValue("description", "%" + carPartsSearchForm.getDescription() + "%");
         }
 
-        Object[] preparedStatementArgs = new Object[queryArgs.size()];
-        for(int i = 0; i < preparedStatementArgs.length; i++){
-            preparedStatementArgs[i] = queryArgs.get(i);
-        }
-
-        return this.jdbcTemplate.query(sqlQuery.toString(),
-                new CarPartRowMapper(), preparedStatementArgs);
+        return this.namedParameterJdbcTemplate.query(sqlQuery.toString(), params, new CarPartRowMapper());
     }
 
     private static class CarPartRowMapper implements RowMapper<CarPart> {

@@ -67,7 +67,12 @@ public class CarPartsStoreServiceImpl implements CarPartsStoreService {
         List<CarPartCategory> carPartCategoryList =
                 carPartCategoryRepository.findByName(carPartDTO.getName());
 
-        CarPartCategory carPartCategory = carPartCategoryList.getFirst();
+
+        CarPartCategory carPartCategory=null;
+
+        if(!carPartCategoryList.isEmpty()){
+            carPartCategory=carPartCategoryList.get(0);
+        }
 
         return new CarPart(
                 carPartDTO.getName(),
